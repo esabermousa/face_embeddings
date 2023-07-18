@@ -79,7 +79,7 @@ repos:
 
       - id: run-tests
         name: Run all tests
-        entry: pytest -n auto
+        entry: pytest
         language: system
         types: [python]
         pass_filenames: false
