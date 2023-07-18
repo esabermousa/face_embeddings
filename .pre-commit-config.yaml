@@ -1,0 +1,88 @@
+default_stages: [commit]
+default_language_version:
+  python: python3.10
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.0.0
+    hooks:
+      - id: check-ast
+      - id: trailing-whitespace
+        args: ["--markdown-linebreak-ext=md,markdown"]
+        stages: [commit]
+      - id: check-case-conflict
+      - id: name-tests-test
+        args: ["--django"]
+      - id: check-json
+      - id: check-yaml
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: ^static/
+        stages: [commit]
+
+  - repo: https://github.com/myint/autoflake
+    rev: v1.4
+    hooks:
+      - id: autoflake
+
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        exclude: (migrations)/.*|.*/__init__.py
+        additional_dependencies: [flake8-bugbear]
+
+  - repo: https://github.com/myint/docformatter
+    rev: v1.4
+    hooks:
+      - id: docformatter
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.0.0
+    hooks:
+      - id: pyupgrade
+
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        exclude: ^static/
+        language: python
+        types: [python]
+        args: ["--line-length=120"]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+
+  - repo: local
+    hooks:
+      - id: no-auto-migrations
+        name: Checking auto-named migrations
+        entry: Please provide a descriptive name for migrations.
+        language: fail
+        verbose: true
+        files: .*/migrations/.*_auto_.*\.py$
+
+      - id: run-mypy
+        name: Run mypy checks
+        entry: mypy . --config-file mypy.ini
+        args: [--install-types, --non-interactive]
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [commit]
+
+      - id: run-tests
+        name: Run all tests
+        entry: pytest -n auto
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true
+        verbose: true
+        stages: [push]
