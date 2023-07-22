@@ -1,10 +1,8 @@
 # Standard Library
-import os
+
 
 # Django
 from django.apps import apps
-from django.conf import settings
-from django.core.files.storage import default_storage
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 
@@ -13,6 +11,10 @@ from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+# Face Embeddings
+from common.fields import FaceEncodedField
+from face_images.services import FaceImageEncodingService
+
 
 class FaceImageCreateView(APIView):
     class InputSerializer(serializers.Serializer):
@@ -20,29 +22,19 @@ class FaceImageCreateView(APIView):
 
     class OutputSerializer(serializers.Serializer):
         public_id = serializers.CharField()
-        face_encoding = serializers.SerializerMethodField()
+        face_encoding = FaceEncodedField()
         encoding_status = serializers.CharField()
         created_at = serializers.DateTimeField()
         updated_at = serializers.DateTimeField()
-
-        def get_face_encoding(self, obj):
-            # Custom logic to retrieve the face binary encoding
-            return obj.face_encoding
 
     def post(self, request):
         serializer = self.InputSerializer(data=request.data)
         if serializer.is_valid():
             face_image_data = serializer.validated_data["face_image"]
 
-            # Generate a unique filename for the image
-            filename = default_storage.get_available_name(face_image_data.name)
-
-            # Save the image to the local directory using default storage
-            filepath = default_storage.save(os.path.join(settings.MEDIA_ROOT, filename), face_image_data)
-
-            # Save the face_image to the database
-            face_image_model = apps.get_model("face_images.FaceImage")
-            face_image = face_image_model.objects.create(image_url=os.path.join(settings.MEDIA_URL, filepath))
+            # Encode & Store Face Image
+            face_image_encoder = FaceImageEncodingService(face_image_data)
+            face_image = face_image_encoder.perform()
 
             # Serialize the created face_image and return the response
             response_serializer = self.OutputSerializer(face_image)
@@ -53,14 +45,10 @@ class FaceImageCreateView(APIView):
 
 class FaceImageDetailView(APIView):
     class OutputSerializer(serializers.Serializer):
-        face_encoding = serializers.SerializerMethodField()
+        face_encoding = FaceEncodedField()
         encoding_status = serializers.CharField()
         created_at = serializers.DateTimeField()
         updated_at = serializers.DateTimeField()
-
-        def get_face_encoding(self, obj):
-            # Custom logic to retrieve the face binary encoding
-            return "".join(chr(byte) for byte in obj.face_encoding)
 
     def get(self, request, public_id):
         """Gets Face Image Details."""

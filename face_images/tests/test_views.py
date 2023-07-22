@@ -20,7 +20,7 @@ class FaceImageCreateViewTests(APITestCase):
     @classmethod
     def generate_image(cls):
         new_file = io.BytesIO()
-        image = Image.new("RGBA", size=(100, 100), color=(155, 0, 0))
+        image = Image.new("RGBA", size=(100, 100), color="red")
         image.save(new_file, "png")
         new_file.name = "test.png"
         new_file.seek(0)
