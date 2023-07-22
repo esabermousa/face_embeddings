@@ -15,8 +15,20 @@ Including another URLconf
 """
 # Django
 from django.contrib import admin
-from django.urls import path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path
+
+from . import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("face-image/", include("face_images.urls")),
 ]
+
+
+if settings.DEBUG:
+    # Third Parties
+    import debug_toolbar
+
+    urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))
+    urlpatterns += staticfiles_urlpatterns()
