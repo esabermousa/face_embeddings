@@ -12,7 +12,7 @@ from PIL import Image
 
 # Face Embeddings
 from face_images.models import FaceImage
-from face_images.services import FaceImageEncodingService
+from face_images.services import FaceImageEncodingService, FaceImageStatsService
 
 
 class FaceImageEncodingServiceTests(TestCase):
@@ -74,3 +74,32 @@ class FaceImageEncodingServiceTests(TestCase):
         self.assertEqual(face_image.image_url, service.image_path)
         self.assertEqual(face_image.face_encoding, b"")
         self.assertEqual(face_image.encoding_status, FaceImage.ENCODE_FAILED)
+
+
+class FaceImageStatsServiceTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test1.png"), encoding_status="SUCCESS")
+        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test2.png"), encoding_status="PENDING")
+        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test3.png"), encoding_status="SUCCESS")
+        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test4.png"), encoding_status="SUCCESS")
+        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test5.png"), encoding_status="FAILED")
+        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test6.png"), encoding_status="PENDING")
+
+    @classmethod
+    def tearDownClass(cls):
+        FaceImage.objects.all().delete()
+
+    def test_get_status_stats(self):
+        expected_status_counts = [
+            {"encoding_status": "PENDING", "count": 2},
+            {"encoding_status": "SUCCESS", "count": 3},
+            {"encoding_status": "FAILED", "count": 1},
+        ]
+
+        status_counts = FaceImageStatsService.get_status_stats()
+
+        sorted_expected_counts = sorted(expected_status_counts, key=lambda x: x["encoding_status"])
+        sorted_actual_counts = sorted(status_counts, key=lambda x: x["encoding_status"])
+
+        self.assertEqual(sorted_actual_counts, sorted_expected_counts)

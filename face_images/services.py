@@ -5,6 +5,7 @@ import os
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.db.models import Count
 
 # Third Parties
 import face_recognition
@@ -22,7 +23,7 @@ class FaceImageEncodingService:
     def _store_image(self, image_data: InMemoryUploadedFile) -> str:
         """Create a unique name and save image into Storage Dir.
 
-        Note:Images Storage may be local Dir "Media" or S3
+        Note:Images Storage may be local dir "Media" or S3
 
         Args:
             image (InMemoryUploadedFile): Uploaded image from request
@@ -51,3 +52,17 @@ class FaceImageEncodingService:
             image_url=self.image_path, face_encoding=encoded_face, encoding_status=status
         )
         return face_image
+
+
+class FaceImageStatsService:
+    """Calculate Face Image stats."""
+
+    @classmethod
+    def get_status_stats(cls) -> list[dict]:
+        """Return Stats for Face image status and its count.
+
+        Returns:
+            list: list of dict with encoding stats and its count
+        """
+        status_counts = FaceImage.objects.values("encoding_status").annotate(count=Count("encoding_status"))
+        return status_counts

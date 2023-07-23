@@ -3,7 +3,6 @@
 
 # Django
 from django.apps import apps
-from django.db.models import Count
 from django.shortcuts import get_object_or_404
 
 # Third Parties
@@ -13,7 +12,7 @@ from rest_framework.views import APIView
 
 # Face Embeddings
 from common.fields import FaceEncodedField
-from face_images.services import FaceImageEncodingService
+from face_images.services import FaceImageEncodingService, FaceImageStatsService
 
 
 class FaceImageCreateView(APIView):
@@ -28,15 +27,14 @@ class FaceImageCreateView(APIView):
         updated_at = serializers.DateTimeField()
 
     def post(self, request):
+        """Encode Face Image & Retrieve encoded face."""
         serializer = self.InputSerializer(data=request.data)
         if serializer.is_valid():
             face_image_data = serializer.validated_data["face_image"]
 
-            # Encode & Store Face Image
             face_image_encoder = FaceImageEncodingService(face_image_data)
             face_image = face_image_encoder.perform()
 
-            # Serialize the created face_image and return the response
             response_serializer = self.OutputSerializer(face_image)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -64,10 +62,6 @@ class FaceImageStatsView(APIView):
 
     def get(self, request):
         """Retrieve the total number of processed images with its status."""
-        status_counts_data = (
-            apps.get_model("face_images.FaceImage")
-            .objects.values("encoding_status")
-            .annotate(count=Count("encoding_status"))
-        )
-        serializer = self.OutputSerializer(status_counts_data, many=True)
+        status_stats = FaceImageStatsService.get_status_stats()
+        serializer = self.OutputSerializer(status_stats, many=True)
         return Response(serializer.data)
