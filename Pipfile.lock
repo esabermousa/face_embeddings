@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "3d36dd1117ce07d8406fe89c370f2fdff9686c8053aff13d930309bc3feb14c5"
+            "sha256": "1ee7e1dddf0df6de0ee815bcc44bfa958e88b27e2b7aec529a28bcae784c14f3"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -64,6 +64,22 @@
             ],
             "index": "pypi",
             "version": "==0.10.0"
+        },
+        "django-guid": {
+            "hashes": [
+                "sha256:1d0daf722cf61be880c86bc1bc60ebb8f72b34e457a6f300e3fdbefa9a1680dd",
+                "sha256:b969a3fb58369c4ba4151d78014263d96dd9b5563a18b634f930a9f8a643c289"
+            ],
+            "index": "pypi",
+            "version": "==3.3.1"
+        },
+        "django-request-logging": {
+            "hashes": [
+                "sha256:4d9e520842303aaf654c6ffd39831b04513ea343574f8579a59ada46ffb95fb6",
+                "sha256:94934d77c2d0fd76fdb9879b874368aa7d55672f0c7e1f59dd39b991c3e123b4"
+            ],
+            "index": "pypi",
+            "version": "==0.7.5"
         },
         "django-storages": {
             "hashes": [
@@ -285,6 +301,14 @@
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==2.8.2"
         },
+        "python-json-logger": {
+            "hashes": [
+                "sha256:23e7ec02d34237c5aa1e29a070193a4ea87583bb4e7f8fd06d3de8264c4b2e1c",
+                "sha256:f380b826a991ebbe3de4d897aeec42760035ac760345e57b812938dc8b35e2bd"
+            ],
+            "index": "pypi",
+            "version": "==2.0.7"
+        },
         "pytz": {
             "hashes": [
                 "sha256:1d8ce29db189191fb55338ee6d0387d82ab59f3d00eac103412d64e0ebd0c588",
@@ -462,11 +486,11 @@
         },
         "identify": {
             "hashes": [
-                "sha256:9df2489842707d431b38ce3410ef8df40da5b10a3e28a3fcac1a42523e956409",
-                "sha256:db4de0e758c0db8f81996816cd2f3f2f8c5c8d49a7fd02f3b4109aac6fd80e29"
+                "sha256:7243800bce2f58404ed41b7c002e53d4d22bcf3ae1b7900c2d7aefd95394bf7f",
+                "sha256:c22a8ead0d4ca11f1edd6c9418c3220669b3b7533ada0a0ffa6cc0ef85cf9b54"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==2.5.25"
+            "version": "==2.5.26"
         },
         "mccabe": {
             "hashes": [

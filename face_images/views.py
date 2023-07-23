@@ -1,11 +1,12 @@
 # Standard Library
-
+import logging
 
 # Django
 from django.apps import apps
 from django.shortcuts import get_object_or_404
 
 # Third Parties
+from request_logging.decorators import no_logging
 from rest_framework import serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -13,6 +14,8 @@ from rest_framework.views import APIView
 # Face Embeddings
 from common.fields import FaceEncodedField
 from face_images.services import FaceImageEncodingService, FaceImageStatsService
+
+logger = logging.getLogger("django.request")
 
 
 class FaceImageCreateView(APIView):
@@ -26,6 +29,7 @@ class FaceImageCreateView(APIView):
         created_at = serializers.DateTimeField()
         updated_at = serializers.DateTimeField()
 
+    @no_logging(log_response=False)
     def post(self, request):
         """Encode Face Image & Retrieve encoded face."""
         serializer = self.InputSerializer(data=request.data)
@@ -48,6 +52,7 @@ class FaceImageDetailView(APIView):
         created_at = serializers.DateTimeField()
         updated_at = serializers.DateTimeField()
 
+    @no_logging(log_response=False)
     def get(self, request, public_id):
         """Gets Face Image Details."""
         face_image = get_object_or_404(apps.get_model("face_images.FaceImage"), public_id=public_id)

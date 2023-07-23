@@ -1,4 +1,5 @@
 # Standard Library
+import logging
 import os
 
 # Django
@@ -12,6 +13,8 @@ import face_recognition
 
 # Face Embeddings
 from face_images.models import FaceImage
+
+logger = logging.getLogger("main_logger")
 
 
 class FaceImageEncodingService:
@@ -31,9 +34,11 @@ class FaceImageEncodingService:
         Returns:
             str: Stored Image path
         """
+        logger.info("Receiving Image and Starting store it...")
         image_name = default_storage.get_available_name(image_data.name)
         image_path = os.path.join(settings.MEDIA_ROOT, image_name)
         default_storage.save(image_path, image_data)
+        logger.info("Storing Image successfully...")
         return image_path
 
     def perform(self) -> FaceImage:
@@ -43,6 +48,7 @@ class FaceImageEncodingService:
         Returns:
             FaceImage: Created record for FaceImage
         """
+        logger.info("starting FaceImageEncoding Service...")
         loaded_image = face_recognition.load_image_file(self.image_path)
         encoding_results = face_recognition.face_encodings(loaded_image)
         encoded_face, status = (
@@ -51,6 +57,7 @@ class FaceImageEncodingService:
         face_image = FaceImage.objects.create(
             image_url=self.image_path, face_encoding=encoded_face, encoding_status=status
         )
+        logger.info(f"FaceImage: {face_image.public_id} encoded successfully...")
         return face_image
 
 
@@ -65,4 +72,5 @@ class FaceImageStatsService:
             list: list of dict with encoding stats and its count
         """
         status_counts = FaceImage.objects.values("encoding_status").annotate(count=Count("encoding_status"))
+        logger.info("Return images status stats successfully...")
         return status_counts
