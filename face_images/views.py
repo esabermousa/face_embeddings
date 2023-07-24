@@ -32,9 +32,9 @@ class FaceImageCreateView(APIView):
     @no_logging(log_response=False)
     def post(self, request):
         """Encode Face Image & Retrieve encoded face."""
-        serializer = self.InputSerializer(data=request.data)
-        if serializer.is_valid():
-            face_image_data = serializer.validated_data["face_image"]
+        input_serializer = self.InputSerializer(data=request.data)
+        if input_serializer.is_valid():
+            face_image_data = input_serializer.validated_data["face_image"]
 
             face_image_encoder = FaceImageEncodingService(face_image_data)
             face_image = face_image_encoder.perform()
@@ -42,7 +42,7 @@ class FaceImageCreateView(APIView):
             response_serializer = self.OutputSerializer(face_image)
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
         else:
-            return Response(serializer.errors, status=400)
+            return Response(input_serializer.errors, status=400)
 
 
 class FaceImageDetailView(APIView):
@@ -68,5 +68,5 @@ class FaceImageStatsView(APIView):
     def get(self, request):
         """Retrieve the total number of processed images with its status."""
         status_stats = FaceImageStatsService.get_status_stats()
-        serializer = self.OutputSerializer(status_stats, many=True)
-        return Response(serializer.data)
+        response_serializer = self.OutputSerializer(status_stats, many=True)
+        return Response(response_serializer.data)

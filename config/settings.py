@@ -35,6 +35,7 @@ environ.Env.read_env(env_file)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
 
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     "face_images",
     # 3rd party
     "rest_framework",
+    "rest_framework_api_key",
     "django_guid",
 ]
 
@@ -144,6 +146,19 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework_api_key.permissions.HasAPIKey",
+    ],
+    "DATETIME_FORMAT": DATETIME_FORMAT,
+    "DATETIME_INPUT_FORMATS": DATETIME_INPUT_FORMATS,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "5/sec"},
+}
 
 # Enable Debug-toolbar
 if DEBUG:
