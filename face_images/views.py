@@ -6,6 +6,7 @@ from django.apps import apps
 from django.shortcuts import get_object_or_404
 
 # Third Parties
+from drf_spectacular.utils import extend_schema
 from request_logging.decorators import no_logging
 from rest_framework import serializers, status
 from rest_framework.response import Response
@@ -29,6 +30,12 @@ class FaceImageCreateView(APIView):
         created_at = serializers.DateTimeField()
         updated_at = serializers.DateTimeField()
 
+    @extend_schema(
+        operation_id="Face Image Encoding",
+        tags=["Face Image"],
+        request=InputSerializer,
+        responses={201: OutputSerializer},
+    )
     @no_logging(log_response=False)
     def post(self, request):
         """Encode Face Image & Retrieve encoded face."""
@@ -51,6 +58,11 @@ class FaceImageDetailView(APIView):
         created_at = serializers.DateTimeField()
         updated_at = serializers.DateTimeField()
 
+    @extend_schema(
+        operation_id="Retrieve Encode Face Image",
+        tags=["Face Image"],
+        responses={200: OutputSerializer},
+    )
     @no_logging(log_response=False)
     def get(self, request, public_id):
         """Gets Face Image Details."""
@@ -64,6 +76,11 @@ class FaceImageStatsView(APIView):
         encoding_status = serializers.CharField()
         count = serializers.IntegerField()
 
+    @extend_schema(
+        operation_id="Retrieve Stats Face Image",
+        tags=["Face Image"],
+        responses={200: OutputSerializer},
+    )
     def get(self, request):
         """Retrieve the total number of processed images with its status."""
         status_stats = FaceImageStatsService.get_status_stats()

@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_api_key",
     "django_guid",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -148,6 +149,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework_api_key.permissions.HasAPIKey",
     ],
@@ -160,6 +162,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {"anon": "5/sec"},
     "DEFAULT_RENDERER_CLASSES": ("api.renderers.APIRenderer",),
     "EXCEPTION_HANDLER": "api.custom_exception_handler.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # Enable Debug-toolbar
@@ -318,4 +321,30 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+# For drf-spectacular docs: https://drf-spectacular.readthedocs.io/
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Face Embedding APIs",
+    "VERSION": "0.1.0",
+    "DESCRIPTION": "Service That provide set of Apis to produce Face embeddings",
+    "ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE": False,
+    "SORT_OPERATIONS": False,
+    "SORT_OPERATION_PARAMETERS": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "AUTHORIZATION",
+                "description": "apiKey authentication with required prefix `Api-Key `",
+            }
+        }
+    },
+    "SECURITY": [
+        {
+            "ApiKeyAuth": [],
+        }
+    ],
 }

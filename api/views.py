@@ -6,6 +6,7 @@ from django.core.exceptions import RequestAborted
 from django.db import connection
 
 # Third Parties
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -28,7 +29,14 @@ class HealthCheckView(APIView):
             logger.critical(f"Can't connect to db. [Reason: {error}]", exc_info=True)
             raise RequestAborted("Database failure!")
 
+    @extend_schema(
+        auth=None,
+        operation_id="Health-Check",
+        tags=["Health Check"],
+        responses={200: {}},
+    )
     def get(self, request, *args, **kwargs):
+        """Validate Service Health-check & its components."""
         try:
             logger.info("Starting health-check.")
             self._check_db()
