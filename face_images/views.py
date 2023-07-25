@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from common.fields import FaceEncodedField
 from face_images.services import FaceImageEncodingService, FaceImageStatsService
 
-logger = logging.getLogger("django.request")
+logger = logging.getLogger("main_logger")
 
 
 class FaceImageCreateView(APIView):
@@ -33,16 +33,15 @@ class FaceImageCreateView(APIView):
     def post(self, request):
         """Encode Face Image & Retrieve encoded face."""
         input_serializer = self.InputSerializer(data=request.data)
-        if input_serializer.is_valid():
-            face_image_data = input_serializer.validated_data["face_image"]
+        input_serializer.is_valid(raise_exception=True)
 
-            face_image_encoder = FaceImageEncodingService(face_image_data)
-            face_image = face_image_encoder.perform()
+        face_image_data = input_serializer.validated_data["face_image"]
 
-            response_serializer = self.OutputSerializer(face_image)
-            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-        else:
-            return Response(input_serializer.errors, status=400)
+        face_image_encoder = FaceImageEncodingService(face_image_data)
+        face_image = face_image_encoder.perform()
+
+        response_serializer = self.OutputSerializer(face_image)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class FaceImageDetailView(APIView):

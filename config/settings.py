@@ -158,6 +158,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "5/sec"},
+    "DEFAULT_RENDERER_CLASSES": ("api.renderers.APIRenderer",),
+    "EXCEPTION_HANDLER": "api.custom_exception_handler.custom_exception_handler",
 }
 
 # Enable Debug-toolbar

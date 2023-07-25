@@ -51,10 +51,11 @@ class FaceImageCreateViewTests(APITestCase):
         cls.delete_image_file()
 
     def test_unauthenticated_encode_face_image(self):
+        message = "Authentication credentials were not provided."
         response = self.client.post(data=self.request_data, path=self.url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertIn("Authentication credentials were not provided.", response.data["detail"])
+        assert message in str(response.data)
 
     def test_success_encode_face_image(self):
         response = self.client.post(data=self.request_data, path=self.url, HTTP_AUTHORIZATION=f"Api-Key {self.key}")
@@ -68,12 +69,11 @@ class FaceImageCreateViewTests(APITestCase):
         self.assertIn("updated_at", response.data)
 
     def test_encode_face_image_with_empty_body(self):
-        response_message = "No file was submitted."
+        message = "No file was submitted."
         response = self.client.post(data=dict(), path=self.url, HTTP_AUTHORIZATION=f"Api-Key {self.key}")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("face_image", response.data)
-        self.assertIn(response_message, response.data["face_image"])
+        assert message in str(response.data)
 
 
 class FaceImageDetailViewTests(APITestCase):
@@ -89,10 +89,11 @@ class FaceImageDetailViewTests(APITestCase):
         APIKey.objects.all().delete()
 
     def test_unauthenticated_retrieve_encode_face_image(self):
+        message = "Authentication credentials were not provided."
         response = self.client.get(path=self.url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertIn("Authentication credentials were not provided.", response.data["detail"])
+        assert message in str(response.data)
 
     def test_success_retrieve_encode_face_image(self):
         response = self.client.get(path=self.url, HTTP_AUTHORIZATION=f"Api-Key {self.key}")
@@ -104,11 +105,12 @@ class FaceImageDetailViewTests(APITestCase):
         self.assertIn("updated_at", response.data)
 
     def test_get_face_image_details_not_found(self):
+        message = "No FaceImage matches the given query."
         url = reverse("retrieve-encode-face-image", args=[str(uuid.uuid4())])
         response = self.client.get(url, HTTP_AUTHORIZATION=f"Api-Key {self.key}")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("Not found.", response.data["detail"])
+        assert message in str(response.data)
 
 
 class FaceImageStatsViewTests(APITestCase):
@@ -129,10 +131,11 @@ class FaceImageStatsViewTests(APITestCase):
         APIKey.objects.all().delete()
 
     def test_unauthenticated_retrieve_stats_face_image(self):
+        message = "Authentication credentials were not provided."
         response = self.client.get(path=self.url)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-        self.assertIn("Authentication credentials were not provided.", response.data["detail"])
+        assert message in str(response.data)
 
     def test_success_retrieve_stats_face_image(self):
         response = self.client.get(path=self.url, HTTP_AUTHORIZATION=f"Api-Key {self.key}")

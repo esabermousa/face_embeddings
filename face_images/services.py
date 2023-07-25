@@ -4,6 +4,7 @@ import os
 
 # Django
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Count
@@ -34,12 +35,17 @@ class FaceImageEncodingService:
         Returns:
             str: Stored Image path
         """
-        logger.info("Receiving Image and Starting store it...")
-        image_name = default_storage.get_available_name(image_data.name)
-        image_path = os.path.join(settings.MEDIA_ROOT, image_name)
-        default_storage.save(image_path, image_data)
-        logger.info("Storing Image successfully...")
-        return image_path
+        try:
+            logger.info("Receiving Image and Starting store it...")
+            image_name = default_storage.get_available_name(image_data.name)
+            image_path = os.path.join(settings.MEDIA_ROOT, image_name)
+            default_storage.save(image_path, image_data)
+            logger.info("Storing Image successfully...")
+            return image_path
+        except Exception as exc:
+            error_message = f"Exception occurred while file storing: {exc}"
+            logger.warning(error_message, exc_info=True)
+            raise ValidationError(error_message)
 
     def perform(self) -> FaceImage:
         """Load image file into face_recognition & extract encoded_face Then
@@ -48,17 +54,28 @@ class FaceImageEncodingService:
         Returns:
             FaceImage: Created record for FaceImage
         """
-        logger.info("starting FaceImageEncoding Service...")
-        loaded_image = face_recognition.load_image_file(self.image_path)
-        encoding_results = face_recognition.face_encodings(loaded_image)
-        encoded_face, status = (
-            (encoding_results[0], FaceImage.ENCODE_SUCCESS) if encoding_results else (b"", FaceImage.ENCODE_FAILED)
-        )
-        face_image = FaceImage.objects.create(
-            image_url=self.image_path, face_encoding=encoded_face, encoding_status=status
-        )
-        logger.info(f"FaceImage: {face_image.public_id} encoded successfully...")
-        return face_image
+        try:
+            logger.info("starting FaceImageEncoding Service...")
+            loaded_image = face_recognition.load_image_file(self.image_path)
+            encoding_results = face_recognition.face_encodings(loaded_image)
+            encoded_face, status = (
+                (encoding_results[0], FaceImage.ENCODE_SUCCESS) if encoding_results else (b"", FaceImage.ENCODE_FAILED)
+            )
+        except Exception as exc:
+            error_message = f"Exception occurred while encoding face image: {exc}"
+            logger.warning(error_message, exc_info=True)
+            raise ValidationError(error_message)
+
+        try:
+            face_image = FaceImage.objects.create(
+                image_url=self.image_path, face_encoding=encoded_face, encoding_status=status
+            )
+            logger.info(f"FaceImage: {face_image.public_id} encoded successfully...")
+            return face_image
+        except Exception as exc:
+            error_message = f"Exception occurred while creating face image record: {exc}"
+            logger.warning(error_message, exc_info=True)
+            raise ValidationError(error_message)
 
 
 class FaceImageStatsService:
@@ -71,6 +88,11 @@ class FaceImageStatsService:
         Returns:
             list: list of dict with encoding stats and its count
         """
-        status_counts = FaceImage.objects.values("encoding_status").annotate(count=Count("encoding_status"))
-        logger.info("Return images status stats successfully...")
-        return status_counts
+        try:
+            status_counts = FaceImage.objects.values("encoding_status").annotate(count=Count("encoding_status"))
+            logger.info("Return images status stats successfully...")
+            return status_counts
+        except Exception as exc:
+            error_message = f"Exception occurred while calculating face images status stats: {exc}"
+            logger.warning(error_message, exc_info=True)
+            raise ValidationError(error_message)
