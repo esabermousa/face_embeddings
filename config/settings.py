@@ -159,7 +159,6 @@ REST_FRAMEWORK = {
     "DATETIME_INPUT_FORMATS": DATETIME_INPUT_FORMATS,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "5/sec"},
     "DEFAULT_RENDERER_CLASSES": ("api.renderers.APIRenderer",),
