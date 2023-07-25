@@ -1,5 +1,7 @@
 # Face Embeddings APIs
 
+[![Hacksoft](https://img.shields.io/badge/code%20style-hacksoft-ff69b4.svg)](https://github.com/HackSoftware/Django-Styleguide)
+
 This repository contains the code for the Face Embeddings APIs, which provide a set of endpoints to calculate face embeddings of human faces from images. The APIs are built using Django Rest Framework (DRF) and utilize the face_recognition library for face encoding.
 
 ## API Endpoints
