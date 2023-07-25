@@ -30,7 +30,7 @@ class HealthCheckView(APIView):
             raise RequestAborted("Database failure!")
 
     @extend_schema(
-        auth=None,
+        auth=[],
         operation_id="Health-Check",
         tags=["Health Check"],
         responses={200: {}},
