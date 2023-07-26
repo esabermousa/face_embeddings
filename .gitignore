@@ -173,7 +173,7 @@ dmypy.json
 *.code-workspace
 
 # Media content
-media/
+/media/*
 
 # Static content
 static/*

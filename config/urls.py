@@ -15,8 +15,26 @@ Including another URLconf
 """
 # Django
 from django.contrib import admin
-from django.urls import path
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.urls import include, path
+
+from . import settings
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/", include("api.urls")),
 ]
+
+# This is to return a JSON response instead of HTML template in case of any unhandled exceptions
+# For more info: https://www.django-rest-framework.org/api-guide/exceptions/#generic-error-views
+# DRF already handles 404 and 403 exceptions so no need the specify these.
+# Note: this works only with DEBUG = False
+handler500 = "rest_framework.exceptions.server_error"
+handler404 = "rest_framework.exceptions.bad_request"
+
+if settings.DEBUG:
+    # Third Parties
+    import debug_toolbar
+
+    urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))
+    urlpatterns += staticfiles_urlpatterns()

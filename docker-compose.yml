@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  face_embeddings_db:
+    image: postgres:13-alpine
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  face_embeddings_app:
+    image: face_embeddings
+    container_name: face_embeddings
+    env_file:
+      - .env
+    build:
+      context: .
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - logs_volume:/app/logs
+      - static_volume:/app/static
+      - media_volume:/app/media
+    depends_on:
+      - face_embeddings_db
+
+volumes:
+  postgres_data:
+  logs_volume:
+  static_volume:
+  media_volume:

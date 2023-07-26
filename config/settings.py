@@ -13,8 +13,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 from pathlib import Path
 
+# Django
+from django.conf.global_settings import DATETIME_INPUT_FORMATS
+
 # Third Parties
 import environ
+from pythonjsonlogger import jsonlogger
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,6 +34,7 @@ environ.Env.read_env(env_file)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
@@ -47,11 +52,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     # Local Apps
+    "face_images",
     # 3rd party
     "rest_framework",
+    "rest_framework_api_key",
+    "django_guid",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
+    "django_guid.middleware.guid_middleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -59,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "request_logging.middleware.LoggingMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -85,10 +96,15 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
+
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["POSTGRES_DB"],
+        "USER": os.environ["POSTGRES_USER"],
+        "PASSWORD": os.environ["POSTGRES_PASSWORD"],
+        "HOST": os.environ["POSTGRES_HOST"],
+        "PORT": os.environ["POSTGRES_PORT"],
     }
 }
 
@@ -118,6 +134,8 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"
+DATETIME_FORMAT = "%Y-%m-%d, %I:%M:%S %p (%z)"
+DATETIME_INPUT_FORMATS += ("%Y-%m-%d, %I:%M:%S %p (%z)",)
 
 USE_I18N = True
 
@@ -129,11 +147,32 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 STATIC_URL = "static/"
 
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "api.authenticate.ApiKeyAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework_api_key.permissions.HasAPIKey",
+    ],
+    "DATETIME_FORMAT": DATETIME_FORMAT,
+    "DATETIME_INPUT_FORMATS": DATETIME_INPUT_FORMATS,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {"anon": "10/sec"},
+    "DEFAULT_RENDERER_CLASSES": ("api.renderers.APIRenderer",),
+    "EXCEPTION_HANDLER": "api.custom_exception_handler.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
 
 # Enable Debug-toolbar
 if DEBUG:
@@ -177,3 +216,144 @@ else:
     """Default: None, configure your proxy to set a custom HTTP header that tells Django whether the request came in via HTTPS, and set it with https and return is_secure() with True."""
     X_FRAME_OPTIONS = "DENY"
     SESSION_COOKIE_SAMESITE = "Strict"
+
+
+# Logs Configurations
+DJANGO_GUID = {
+    "GUID_HEADER_NAME": "Correlation-ID",
+    "VALIDATE_GUID": True,
+    "RETURN_HEADER": True,
+    "UUID_LENGTH": 32,
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "filters": {
+        "correlation_id": {"()": "django_guid.log_filters.CorrelationId"},
+        "require_debug_true": {"()": "django.utils.log.RequireDebugTrue"},
+    },
+    "formatters": {
+        "default": {
+            "format": "%(asctime)s - %(levelname)-5s [%(name)s] [%(correlation_id)s] %(process)d %(thread)d  %(message)s %(module)s ",
+            "datefmt": DATETIME_FORMAT,
+        },
+        "simple": {
+            "()": jsonlogger.JsonFormatter,
+            "format": "%(asctime)s - %(levelname)-5s [%(name)s] [%(correlation_id)s] %(message)s",
+            "datefmt": DATETIME_FORMAT,
+        },
+        "detailed": {
+            "()": jsonlogger.JsonFormatter,
+            "format": "%(asctime)s - %(levelname)-5s [%(name)s] [%(correlation_id)s] %(process)d %(thread)d %(message)s %(pathname)s:%(lineno)d %(funcName)s",
+            "datefmt": DATETIME_FORMAT,
+        },
+    },
+    "handlers": {
+        "sql_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 20 * 1024 * 1024,  # 20 MB
+            "backupCount": 5,
+            "filename": os.path.join(BASE_DIR, "logs/sql.log"),
+            "formatter": "default",
+            "filters": [
+                "correlation_id",
+            ],
+        },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "default",
+            "filters": [
+                "correlation_id",
+            ],
+        },
+        "requests": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 20 * 1024 * 1024,  # 20 MB
+            "backupCount": 5,
+            "filename": os.path.join(BASE_DIR, "logs/requests.log"),
+            "formatter": "default",
+            "filters": [
+                "correlation_id",
+            ],
+        },
+        "debug_handler": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 20 * 1024 * 1024,  # 20 MB
+            "backupCount": 5,
+            "filename": os.path.join(BASE_DIR, "logs/service.log"),
+            "formatter": "simple",
+            "filters": [
+                "correlation_id",
+            ],
+        },
+        "error_handler": {
+            "level": "WARNING",
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 20 * 1024 * 1024,  # 20 MB
+            "backupCount": 5,
+            "filename": os.path.join(BASE_DIR, "logs/service.log"),
+            "formatter": "detailed",
+            "filters": [
+                "correlation_id",
+            ],
+        },
+        "critical_handler": {
+            "level": "CRITICAL",
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 20 * 1024 * 1024,  # 20 MB
+            "backupCount": 5,
+            "filename": os.path.join(BASE_DIR, "logs/critical.log"),
+            "formatter": "detailed",
+            "filters": [
+                "correlation_id",
+            ],
+        },
+    },
+    "loggers": {
+        "django.db.backends": {
+            "handlers": ["sql_file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "main_logger": {
+            "handlers": ["console", "debug_handler", "error_handler", "critical_handler"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console", "requests"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+    },
+}
+
+# For drf-spectacular docs: https://drf-spectacular.readthedocs.io/
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Face Embedding APIs",
+    "VERSION": "0.1.0",
+    "DESCRIPTION": "Service That provide set of Apis to produce Face embeddings",
+    "ENUM_ADD_EXPLICIT_BLANK_NULL_CHOICE": False,
+    "SORT_OPERATIONS": False,
+    "SORT_OPERATION_PARAMETERS": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "AUTHORIZATION",
+                "description": "apiKey authentication with required prefix `Api-Key `",
+            }
+        }
+    },
+    "SECURITY": [
+        {
+            "ApiKeyAuth": [],
+        }
+    ],
+}
