@@ -16,7 +16,9 @@ The following are the available API endpoints:
 
 4. **GET /api/face-image/stats/**: Retrieves statistics about how many images were processed, including the count of images with each encoding status.
 
-Here is a [link](https://drive.google.com/file/d/1CCk3a7OU5Re_hB08gpJMWp5qpB2L2Rnk/view?usp=sharing) for postman collection with its environment For APIs.
+5. **GET /api/face-image/avg-encodings/**: Retrieves AVG about face encodings for all previously calculated images.
+
+Here is a [link](https://drive.google.com/file/d/1O0lpLuYXUDd8dScqejQb69fKTpkaI7mF/view?usp=sharing) for postman collection with its environment For APIs.
 
 ## Getting Started
 
@@ -42,10 +44,12 @@ To run the Face Embeddings APIs on your local machine, follow these steps:
 3. Build and run using Docker:
 
    ```bash
-   docker compose up --build
+   docker compose up -d --build
    ```
 
-4. The APIs should now be accessible at `http://localhost:8000/api/`.
+4. Admin portal can be accessible at `http://localhost:8000/admin/` with credentials: `admin`, `admin_pass` to create api-key. You should change these credentials from admin portal.
+
+5. The APIs should now be accessible at `http://localhost:8000/api/`.
 
 ### API Key Authentication
 
@@ -68,7 +72,7 @@ The API documentation is available using the Swagger UI provided by DRF-Spectacu
 To run the test suite, use the following command:
 
 ```bash
-docker compose run face_embeddings_app pytest
+docker exec face_embeddings pytest
 ```
 
 ## Contributing
@@ -87,6 +91,8 @@ python3.10 -m pip install pipenv --upgrade
 pipenv --python 3.10
 pipenv shell
 pipenv install (run `pipenv install -d` for local development)
+python manage.py migrate
+python manage.py createsuperuser
 ```
 
 ### Configuring [Pre-Commit](https://pre-commit.com/)

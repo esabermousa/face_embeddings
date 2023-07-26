@@ -86,3 +86,20 @@ class FaceImageStatsView(APIView):
         status_stats = FaceImageStatsService.get_status_stats()
         response_serializer = self.OutputSerializer(status_stats, many=True)
         return Response(response_serializer.data)
+
+
+class FaceImageEncodingAverageView(APIView):
+    class OutputSerializer(serializers.Serializer):
+        average_face_encoding = serializers.ListField(child=serializers.FloatField())
+
+    @extend_schema(
+        operation_id="Retrieve Average Face encodings",
+        tags=["Face Image"],
+        responses={200: OutputSerializer},
+    )
+    @no_logging(log_response=False)
+    def get(self, request):
+        """Retrieve the average of total success encoding images."""
+        encodings_average = FaceImageStatsService.get_faces_encoding_average()
+        response_serializer = self.OutputSerializer({"average_face_encoding": encodings_average})
+        return Response(response_serializer.data)

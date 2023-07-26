@@ -8,6 +8,8 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedF
 from django.test import TestCase
 
 # Third Parties
+import numpy as np
+import pytest
 from PIL import Image
 
 # Face Embeddings
@@ -79,12 +81,43 @@ class FaceImageEncodingServiceTests(TestCase):
 class FaceImageStatsServiceTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test1.png"), encoding_status="SUCCESS")
-        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test2.png"), encoding_status="PENDING")
-        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test3.png"), encoding_status="SUCCESS")
-        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test4.png"), encoding_status="SUCCESS")
-        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test5.png"), encoding_status="FAILED")
-        FaceImage.objects.create(image_url=os.path.join(settings.MEDIA_ROOT, "test6.png"), encoding_status="PENDING")
+        cls.face_encoding1 = np.array([0.5, -0.3, 0.7, 0.2, -0.1])
+        cls.face_encoding2 = np.array([0.8, 0.1, -0.5, 0.4, 0.9])
+        cls.face_encoding3 = np.array([-0.2, 0.6, 0.3, -0.4, 0.5])
+        cls.face_encoding4 = np.array([0.1, 0.6, -0.1, 0.2, 0.7])
+        cls.face_encoding5 = np.array([-0.5, 0.2, 0.3, -0.4, 0.5])
+        cls.face_encoding6 = np.array([0.5, -0.3, 0.7, 0.2, -0.1])
+
+        cls.face_image1 = FaceImage.objects.create(
+            image_url=os.path.join(settings.MEDIA_ROOT, "test1.png"),
+            face_encoding=cls.face_encoding1.tobytes(),
+            encoding_status="SUCCESS",
+        )
+        cls.face_image2 = FaceImage.objects.create(
+            image_url=os.path.join(settings.MEDIA_ROOT, "test2.png"),
+            face_encoding=cls.face_encoding2.tobytes(),
+            encoding_status="PENDING",
+        )
+        cls.face_image3 = FaceImage.objects.create(
+            image_url=os.path.join(settings.MEDIA_ROOT, "test3.png"),
+            face_encoding=cls.face_encoding3.tobytes(),
+            encoding_status="SUCCESS",
+        )
+        cls.face_image4 = FaceImage.objects.create(
+            image_url=os.path.join(settings.MEDIA_ROOT, "test4.png"),
+            face_encoding=cls.face_encoding4.tobytes(),
+            encoding_status="SUCCESS",
+        )
+        cls.face_image5 = FaceImage.objects.create(
+            image_url=os.path.join(settings.MEDIA_ROOT, "test5.png"),
+            face_encoding=cls.face_encoding5.tobytes(),
+            encoding_status="FAILED",
+        )
+        cls.face_image6 = FaceImage.objects.create(
+            image_url=os.path.join(settings.MEDIA_ROOT, "test6.png"),
+            face_encoding=cls.face_encoding6.tobytes(),
+            encoding_status="PENDING",
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -103,3 +136,26 @@ class FaceImageStatsServiceTests(TestCase):
         sorted_actual_counts = sorted(status_counts, key=lambda x: x["encoding_status"])
 
         self.assertEqual(sorted_actual_counts, sorted_expected_counts)
+
+    def test_calculate_average_face_encoding(self):
+        average_face_encoding = FaceImageStatsService.get_faces_encoding_average()
+        # Calculate the expected average face encoding
+        expected_average_encoding = np.mean([self.face_encoding1, self.face_encoding3, self.face_encoding4], axis=0)
+
+        # Check that the average face encoding returned in the response is equal to the expected average encoding
+        self.assertListEqual(average_face_encoding, expected_average_encoding.tolist())
+
+    def test_calculate_average_face_encoding_insufficient_face_encodings(self):
+        # Delete all face encodings except one from the database
+        self.face_image3.delete()
+        self.face_image4.delete()
+
+        with pytest.raises(Exception, match="Insufficient face encodings to calculate average."):
+            FaceImageStatsService.get_faces_encoding_average()
+
+    def test_calculate_average_face_encoding_no_face_encodings(self):
+        # Delete all face encodings from the database
+        FaceImage.objects.all().delete()
+
+        with pytest.raises(Exception, match="No face encodings found."):
+            FaceImageStatsService.get_faces_encoding_average()

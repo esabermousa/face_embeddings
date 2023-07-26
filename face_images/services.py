@@ -11,6 +11,7 @@ from django.db.models import Count
 
 # Third Parties
 import face_recognition
+import numpy as np
 
 # Face Embeddings
 from face_images.models import FaceImage
@@ -94,5 +95,41 @@ class FaceImageStatsService:
             return status_counts
         except Exception as exc:
             error_message = f"Exception occurred while calculating face images status stats: {exc}"
+            logger.warning(error_message, exc_info=True)
+            raise ValidationError(error_message)
+
+    @classmethod
+    def get_faces_encoding_average(cls) -> list:
+        """Retrieve all success encoded faces and calculate the average.
+
+        Returns:
+            list: Average face encoding
+        """
+        try:
+            face_images = FaceImage.objects.filter(encoding_status=FaceImage.ENCODE_SUCCESS)
+            if not face_images:
+                error_message = "No face encodings found."
+                logger.warning(error_message, exc_info=True)
+                raise ValidationError(error_message)
+
+            face_encodings = [np.frombuffer(encoding.face_encoding, dtype=float) for encoding in face_images]
+
+            if len(face_encodings) < 2:
+                error_message = "Insufficient face encodings to calculate average."
+                logger.warning(error_message, exc_info=True)
+                raise ValidationError(error_message)
+
+            # Find the maximum shape among all face encodings
+            max_shape = max(encoding.shape for encoding in face_encodings)
+
+            # Adjust the shape of each face encoding to match the maximum shape
+            face_encodings = [np.resize(encoding, max_shape) for encoding in face_encodings]
+
+            # Calculate the average encoding
+            average_encoding = np.mean(face_encodings, axis=0)
+
+            return average_encoding.tolist()
+        except Exception as exc:
+            error_message = f"Exception occurred while calculating face encoding Average: {exc}"
             logger.warning(error_message, exc_info=True)
             raise ValidationError(error_message)
