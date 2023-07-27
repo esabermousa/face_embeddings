@@ -38,6 +38,12 @@ To run the Face Embeddings APIs on your local machine, follow these steps:
    # Django Settings
    DEBUG=True
    SECRET_KEY=your_secret_key_here
+   SECURE_SSL_REDIRECT=False
+   POSTGRES_HOST=localhost/face_embeddings_db
+   POSTGRES_PORT=5432
+   POSTGRES_DB=postgres
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
    DATABASE_URL=postgres://username:password@db:5432/database_name
    ```
 
